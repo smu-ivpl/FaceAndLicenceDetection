@@ -527,4 +527,35 @@
 
 ---
 
-- 주행 영상 내 객체 탐지 및 블러링
+- 얼굴/번호판 추론 방법
+
+    ```bash
+    [ 사용법 출력 ]
+    (ainet) C:\FaceAndLicenceDetection\> python prediction.py -h
+
+    	usage: prediction.py [-h] -i INPUT -o OUTPUT [-d DISPLAY] [-c CONFIG] -w
+    	                     WEIGHT [--confidence CONFIDENCE] [-t THRESHOLD]
+    	                     [-u USE_GPU]
+
+    [ Example: YOLO ]
+    (ainet) C:\FaceAndLicenceDetection\> python prediction.py -c ckpt/yolov4_ainet.cfg -w ckpt/yolov4_ainet_best.weights -i video.mp4 -o result.avi
+
+    [ Example: SSD ]
+    (ainet) C:\FaceAndLicenceDetection\> python prediction.py -w ckpt/checkpoint_ssd300_285_best.pth -i video.mp4 -o result.avi
+    ```
+
+    [입력 파라미터 리스트](https://www.notion.so/3803b42dde824c93962e625769530481)
+
+    - darknet 은 설정 파일과 가중치 파일이 분리되어 있으므로 -c , -w 파라미터 인자로 넘겨주지만 pytorch 는 단일 파일만 사용하므로 -w 파라미터 인자만 전달
+
+    - 각 프레임워크 별 파일 확장자 컨벤션을 따를 것 (내부 코드에서 구분자로 활용)
+        - darknet
+            - 설정파일: .cfg
+            - 가중치파일: .weights
+        - pytorch
+            - 체크포인트파일: .pth
+        - tensorflow
+            - 설정파일: .pbtxt
+            - 가중치파일: .pb
+
+---
