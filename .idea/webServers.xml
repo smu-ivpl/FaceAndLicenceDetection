@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="WebServers">
+    <option name="servers">
+      <webServer id="66b155be-9967-4b0b-aff6-f38a13f1c818" name="ivpl-server-AINET">
+        <fileTransfer accessType="SFTP" host="ivpl.iptime.org" port="22" sshConfigId="05486421-1409-4dc7-a2b8-64dc5d971f74" sshConfig="ywlee@ivpl.iptime.org:22 password">
+          <advancedOptions>
+            <advancedOptions dataProtectionLevel="Private" passiveMode="true" shareSSLContext="true" />
+          </advancedOptions>
+        </fileTransfer>
+      </webServer>
+    </option>
+  </component>
+</project>

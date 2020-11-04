@@ -95,6 +95,12 @@ class SSDDetector(object):
 
             temp = np.asarray(annotated_image)
             temp = copy.deepcopy(temp)
+
+            cv2.rectangle(temp, (x1, y1), (x2, y2), (0, 0, 255), 2)
+            text = "{}: {:.4f}".format(det_labels[i],
+                                       det_scores[i])
+            cv2.putText(temp, text, (x1, y1 - 5),
+                        cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 0, 255), 2)
             temp[y1: y2, x1: x2, :] = cv2.GaussianBlur(temp[y1: y2, x1: x2, :], (21, 21), 0)
             annotated_image = Image.fromarray(temp)
 
