@@ -130,3 +130,6 @@ dmypy.json
 
 # Trained weights
 ckpt/
+
+# IDE
+.idea/
