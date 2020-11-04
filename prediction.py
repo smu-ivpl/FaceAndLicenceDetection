@@ -93,7 +93,7 @@ if mode == 'pytorch':
 			frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
 			img = Image.fromarray(frame)
 
-			img = detector.detect(img, min_score=args["confidence"], max_overlap=args["threshold"], top_k=200)
+			img = detector.detect(img, min_score=0.3, max_overlap=0.5, top_k=200)
 
 			frame = np.asarray(img)
 			frame = cv2.cvtColor(frame, cv2.COLOR_RGB2BGR)
