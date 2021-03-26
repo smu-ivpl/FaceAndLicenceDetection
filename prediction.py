@@ -231,7 +231,7 @@ elif args['model'] == 'mrcnn':
 				writer = cv2.VideoWriter(args["output"], fourcc, 30, (frame.shape[1], frame.shape[0]), True)
 
 			if writer is not None:
-				writer.write(frame)
+				writer.write(annotated_image)
 
 			count += 1
 			t.update(1)
