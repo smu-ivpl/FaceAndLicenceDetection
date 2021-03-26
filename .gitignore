@@ -129,7 +129,11 @@ dmypy.json
 .pyre/
 
 # Trained weights
-ckpt/
+ckpt/*
+!ckpt/.gitkeep
 
 # IDE
 .idea/
+
+*.avi
+data.json/*

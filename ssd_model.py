@@ -1,5 +1,5 @@
 from torch import nn
-from utils import *
+from ssd_utils import *
 import torch.nn.functional as F
 from math import sqrt
 from itertools import product as product
@@ -91,7 +91,7 @@ class VGGBase(nn.Module):
         There's one available in PyTorch, see https://pytorch.org/docs/stable/torchvision/models.html#torchvision.models.vgg16
         We copy these parameters into our network. It's straightforward for conv1 to conv5.
         However, the original VGG-16 does not contain the conv6 and con7 layers.
-        Therefore, we convert fc6 and fc7 into convolutional layers, and subsample by decimation. See 'decimate' in utils.py.
+        Therefore, we convert fc6 and fc7 into convolutional layers, and subsample by decimation. See 'decimate' in ssd_utils.py.
         """
         # Current state of base
         state_dict = self.state_dict()
@@ -190,7 +190,7 @@ class PredictionConvolutions(nn.Module):
     Convolutions to predict class scores and bounding boxes using lower and higher-level feature maps.
 
     The bounding boxes (locations) are predicted as encoded offsets w.r.t each of the 8732 prior (default) boxes.
-    See 'cxcy_to_gcxgcy' in utils.py for the encoding definition.
+    See 'cxcy_to_gcxgcy' in ssd_utils.py for the encoding definition.
 
     The class scores represent the scores of each object class in each of the 8732 bounding boxes located.
     A high score for 'background' = no object.

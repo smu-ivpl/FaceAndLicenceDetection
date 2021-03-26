@@ -498,19 +498,19 @@
 
         ```bash
         [ 사용법 출력 ]
-        (ainet) C:\..\SSD.PYTORCH\> python train.py -h
-        usage: train.py [-h] [--data_folder DATA_FOLDER] [--checkpoint CHECKPOINT]
+        (ainet) C:\..\SSD.PYTORCH\> python ssd_train.py -h
+        usage: ssd_train.py [-h] [--data_folder DATA_FOLDER] [--checkpoint CHECKPOINT]
                         [--batch_size BATCH_SIZE] [--iterations ITERATIONS]
                         [--workers WORKERS] [--print_freq PRINT_FREQ] [--lr LR]
                         [--decay_lr_at DECAY_LR_AT] [--decay_lr_to DECAY_LR_TO]
                         [--momentum MOMENTUM] [--weight_decay WEIGHT_DECAY]
 
         [ Example: 기본 값으로 학습 ]
-        (ainet) C:\..\SSD.PYTORCH\> python train.py
+        (ainet) C:\..\SSD.PYTORCH\> python ssd_train.py
 
         [ Example: 파라미터 조정하여 학습 ]
-        (ainet) C:\..\SSD.PYTORCH\> python train.py --arg1=value1 --arg2=value1 ..
-        (ainet) C:\..\SSD.PYTORCH\> python train.py --checkpoint=ckpt/saved_checkpoint_1.pth --lr=10e-4
+        (ainet) C:\..\SSD.PYTORCH\> python ssd_train.py --arg1=value1 --arg2=value1 ..
+        (ainet) C:\..\SSD.PYTORCH\> python ssd_train.py --checkpoint=ckpt/saved_checkpoint_1.pth --lr=10e-4
         ```
 
         [학습 파라미터 리스트](https://www.notion.so/4225e6f0227744b1a24a534ef1c4375f)

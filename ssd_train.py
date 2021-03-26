@@ -4,9 +4,9 @@ import torch.backends.cudnn as cudnn
 import torch.optim
 import torch.utils.data
 from tqdm import tqdm
-from model import SSD300, MultiBoxLoss
+from ssd_model import SSD300, MultiBoxLoss
 from datasets import AINetDataset
-from utils import *
+from ssd_utils import *
 from eval import evaluate
 
 parser = argparse.ArgumentParser()

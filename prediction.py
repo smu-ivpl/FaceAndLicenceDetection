@@ -6,6 +6,9 @@ from tqdm import tqdm
 import torch
 from PIL import Image
 from detect import SSDDetector
+from mrcnn import get_instance_segmentation_model
+from torchvision.transforms import functional as F
+import copy
 
 ap = argparse.ArgumentParser()
 ap.add_argument("-i", "--input", type=str, required=True,
@@ -14,6 +17,8 @@ ap.add_argument("-o", "--output", type=str, required=True,
 	help="path to (optional) output video file")
 ap.add_argument("-d", "--display", type=int, default=1,
 	help="whether or not output frame should be displayed")
+ap.add_argument("-m", "--model", type=str, choices=['yolo', 'ssd', 'mrcnn'], required=True,
+	help="model")
 ap.add_argument("-c", "--config", type=str, default=None,
 	help="path to model configuration file")
 ap.add_argument("-w", "--weight", type=str, required=True, default=None,
@@ -48,22 +53,7 @@ def Blurring(frame, boxes, confidences, idxs, classIDs, color=(0, 0, 255)):
 	return frame
 
 
-mode = None
-if args["config"] == None:
-	if os.path.splitext(os.path.basename(args["weight"]))[1] == '.pth':
-		mode = 'pytorch'
-else:
-	if os.path.splitext(os.path.basename(args["config"]))[1] == '.cfg' and \
-			os.path.splitext(os.path.basename(args["weight"]))[1] == '.weights' :
-		mode = 'darknet'
-
-	if os.path.splitext(os.path.basename(args["config"]))[1] == '.pbtxt' and \
-			os.path.splitext(os.path.basename(args["weight"]))[1] == '.pb' :
-		mode = 'tensorflow'
-
-assert mode != None
-
-if mode == 'pytorch':
+if args['model'] == 'ssd':
 	device = torch.device('cpu')
 	if args["use_gpu"] and torch.cuda.is_available():
 		device = torch.device('cuda')
@@ -109,7 +99,8 @@ if mode == 'pytorch':
 			count += 1
 			t.update(1)
 
-elif mode == 'darknet':
+
+elif args['model'] == 'yolo':
 	net_model = cv2.dnn.readNetFromDarknet(args["config"], args["weight"])
 
 	if args["use_gpu"]:
@@ -182,171 +173,69 @@ elif mode == 'darknet':
 			count += 1
 			t.update(1)
 
-elif mode == 'tensorflow':
-	pass
+
+elif args['model'] == 'mrcnn':
+	name_list = ['licence', 'face']
+
+	device = torch.device('cpu')
+	if args["use_gpu"] and torch.cuda.is_available():
+		device = torch.device('cuda')
+
+	net_model = get_instance_segmentation_model(num_classes=3, pretrainded=False).to(device)
+	net_model.load_state_dict(torch.load(args['weight']))
+	net_model.eval()
+
+	W = None
+	H = None
+
+	vs = cv2.VideoCapture(args["input"] if args["input"] else 0)
+	writer = None
+	count = 1
+
+	with tqdm(total=int(vs.get(cv2.CAP_PROP_FRAME_COUNT))) as t:
+		t.set_description('{}'.format(os.path.basename(args['input'])))
+
+		while True:
+			(grabbed, frame) = vs.read()
+
+			if not grabbed:
+				break
+
+			if W is None or H is None:
+				(H, W) = frame.shape[:2]
+
+			frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
+			img = Image.fromarray(frame)
+			img = torch.unsqueeze(F.to_tensor(img), 0).to(device)
+
+			net_output = net_model(img)
+
+			confidences = torch.where(net_output[0]['scores'][net_output[0]['scores'] > args['confidence']])
+			boxes = net_output[0]['boxes'][confidences].cpu().detach().numpy()
+			classIDs = net_output[0]['labels'][confidences].cpu().detach().numpy()
+
+			boxes = np.uint64(boxes)
+			confidences = confidences[0].cpu().detach().numpy()
+
+			annotated_image = copy.deepcopy(frame)
+			annotated_image = cv2.cvtColor(annotated_image, cv2.COLOR_RGB2BGR)
+
+			for i, box in enumerate(boxes):
+				cv2.rectangle(annotated_image, (box[0], box[1]), (box[2], box[3]), (0, 0, 255), 2)
+				text = "{}".format(name_list[classIDs[i] - 1])
+				cv2.putText(annotated_image, text, (box[0], int(box[1] - 5)), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 0, 255), 2)
+				annotated_image[box[1]: box[3], box[0]: box[2], :] = cv2.GaussianBlur(annotated_image[box[1]: box[3], box[0]: box[2], :], (21, 21), 0)
+
+			if args["output"] != "" and writer is None:
+				fourcc = cv2.VideoWriter_fourcc(*"MJPG")
+				writer = cv2.VideoWriter(args["output"], fourcc, 30, (frame.shape[1], frame.shape[0]), True)
+
+			if writer is not None:
+				writer.write(frame)
+
+			count += 1
+			t.update(1)
 
 else:
 	print('올바른 config, weight 파일이 아닙니다.')
 	exit(-1)
-
-
-
-# class Predictor(object):
-# 	def __init__(self, args):
-# 		self.vs = cv2.VideoCapture(args["input"] if args["input"] else 0)
-# 		self.writer = None
-#
-# 	def Blurring(self, boxes, confidences, idxs, color=(0,0,255), class_name=''):
-# 		if len(idxs) > 0:
-# 			for i in idxs.flatten():
-# 				(x, y) = (boxes[i][0], boxes[i][1])
-# 				(w, h) = (boxes[i][2], boxes[i][3])
-#
-# 				cv2.rectangle(frame, (x, y), (x + w, y + h), color, 2)
-# 				text = "{}: {:.4f}".format(class_name,
-# 										   confidences[i])
-# 				cv2.putText(frame, text, (x, y - 5),
-# 							cv2.FONT_HERSHEY_SIMPLEX, 0.5, color, 2)
-#
-# 				frame[y: y + h, x: x + w, :] = cv2.GaussianBlur(frame[y: y + h, x: x + w, :], (21, 21), 0)
-#
-# 	while True:
-# 		(grabbed, frame) = vs.read()
-#
-# 		if not grabbed:
-# 			print("영상을 찾을 수 없습니다.")
-# 			break
-#
-# 		if W is None or H is None:
-# 			(H, W) = frame.shape[:2]
-#
-# 		blob = cv2.dnn.blobFromImage(frame, 1 / 255.0, (416, 416), swapRB=True, crop=False)
-# 		net_model.setInput(blob)
-#
-# 		net_output = None
-# 		if mode == 'pytorch':
-# 			net_output = net_model.forward()
-# 		elif mode == 'darknet':
-# 			net_output = net_model.forward(ln)
-#
-# 		# initialize our lists of detected bounding boxes, confidences,
-# 		# and class IDs, respectively
-# 		boxes = []
-# 		confidences = []
-# 		classIDs = []
-#
-# 		# loop over each of the layer outputs
-# 		for output in faces:
-# 			# loop over each of the detections
-# 			for detection in output:
-# 				# extract the class ID and confidence (i.e., probability)
-# 				# of the current object detection
-# 				scores = detection[5:]
-# 				classID = np.argmax(scores)
-# 				confidence = scores[classID]
-#
-# 				# filter out weak predictions by ensuring the detected
-# 				# probability is greater than the minimum probability
-# 				if confidence > args["confidence"]:
-# 					# scale the bounding box coordinates back relative to
-# 					# the size of the image, keeping in mind that YOLO
-# 					# actually returns the center (x, y)-coordinates of
-# 					# the bounding box followed by the boxes' width and
-# 					# height
-# 					box = detection[0:4] * np.array([W, H, W, H])
-# 					(centerX, centerY, width, height) = box.astype("int")
-#
-# 					# use the center (x, y)-coordinates to derive the top
-# 					# and and left corner of the bounding box
-# 					x = int(centerX - (width / 2))
-# 					y = int(centerY - (height / 2))
-#
-# 					# update our list of bounding box coordinates,
-# 					# confidences, and class IDs
-# 					boxes.append([x, y, int(width), int(height)])
-# 					confidences.append(float(confidence))
-# 					classIDs.append(classID)
-#
-# 		# apply non-maxima suppression to suppress weak, overlapping
-# 		# bounding boxes
-# 		idxs = cv2.dnn.NMSBoxes(boxes, confidences, args["confidence"],
-# 			args["threshold"])
-#
-# 		Blurring(boxes, confidences, idxs, class_name='Human Face')
-#
-# 		boxes = []
-# 		confidences = []
-# 		classIDs = []
-#
-# 		# loop over each of the layer outputs
-# 		for output in plates:
-# 			# loop over each of the detections
-# 			for detection in output:
-# 				# extract the class ID and confidence (i.e., probability)
-# 				# of the current object detection
-# 				scores = detection[5:]
-# 				classID = np.argmax(scores)
-# 				confidence = scores[classID]
-#
-# 				# filter out weak predictions by ensuring the detected
-# 				# probability is greater than the minimum probability
-# 				if confidence > args["confidence"]:
-# 					# scale the bounding box coordinates back relative to
-# 					# the size of the image, keeping in mind that YOLO
-# 					# actually returns the center (x, y)-coordinates of
-# 					# the bounding box followed by the boxes' width and
-# 					# height
-# 					box = detection[0:4] * np.array([W, H, W, H])
-# 					(centerX, centerY, width, height) = box.astype("int")
-#
-# 					# use the center (x, y)-coordinates to derive the top
-# 					# and and left corner of the bounding box
-# 					x = int(centerX - (width / 2))
-# 					y = int(centerY - (height / 2))
-#
-# 					# update our list of bounding box coordinates,
-# 					# confidences, and class IDs
-# 					boxes.append([x, y, int(width), int(height)])
-# 					confidences.append(float(confidence))
-# 					classIDs.append(classID)
-#
-# 		# apply non-maxima suppression to suppress weak, overlapping
-# 		# bounding boxes
-# 		idxs = cv2.dnn.NMSBoxes(boxes, confidences, args["confidence"],
-# 								args["threshold"])
-#
-# 		Blurring(boxes, confidences, idxs, class_name='License Plate')
-#
-# 		# check to see if the output frame should be displayed to our
-# 		# screen
-# 		if args["display"] > 0:
-# 			# show the output frame
-# 			cv2.imshow("Frame", frame)
-# 			key = cv2.waitKey(1) & 0xFF
-#
-# 			# if the `q` key was pressed, break from the loop
-# 			if key == ord("q"):
-# 				break
-#
-# 		# if an output video file path has been supplied and the video
-# 		# writer has not been initialized, do so now
-# 		if args["output"] != "" and writer is None:
-# 			# initialize our video writer
-# 			fourcc = cv2.VideoWriter_fourcc(*"MJPG")
-# 			writer = cv2.VideoWriter(args["output"], fourcc, 30,
-# 				(frame.shape[1], frame.shape[0]), True)
-#
-# 		# if the video writer is not None, write the frame to the output
-# 		# video file
-# 		if writer is not None:
-# 			writer.write(frame)
-#
-# 		# update the FPS counter
-# 		# fps.update()
-# 		print(count)
-# 		count += 1
-
-	# stop the timer and display FPS information
-	# fps.stop()
-	#print("[INFO] elasped time: {:.2f}".format(fps.elapsed()))
-	#print("[INFO] approx. FPS: {:.2f}".format(fps.fps()))
