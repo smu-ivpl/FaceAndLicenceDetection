@@ -2,7 +2,7 @@ import torchvision
 from torchvision.models.detection.faster_rcnn import FastRCNNPredictor
 from torchvision.models.detection.mask_rcnn import MaskRCNNPredictor
 from mrcnn_engine import train_one_epoch, evaluate
-import utils
+import mrcnn_utils
 import mrcnn_transforms as T
 
 import os
@@ -128,11 +128,11 @@ if __name__ == '__main__':
     # define training and validation data loaders
     data_loader = torch.utils.data.DataLoader(
         dataset, batch_size=8, shuffle=True, num_workers=4,
-        collate_fn=utils.collate_fn)
+        collate_fn=mrcnn_utils.collate_fn)
 
     data_loader_test = torch.utils.data.DataLoader(
         dataset_test, batch_size=1, shuffle=False, num_workers=4,
-        collate_fn=utils.collate_fn)
+        collate_fn=mrcnn_utils.collate_fn)
 
     device = torch.device('cuda') if torch.cuda.is_available() else torch.device('cpu')
 
@@ -164,7 +164,7 @@ if __name__ == '__main__':
         # update the learning rate
         lr_scheduler.step()
 
-        utils.save_on_master({
+        mrcnn_utils.save_on_master({
             'model': model.state_dict(),
             'optimizer': optimizer.state_dict(),
             'lr_scheduler': lr_scheduler.state_dict(),

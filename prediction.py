@@ -5,8 +5,8 @@ import cv2
 from tqdm import tqdm
 import torch
 from PIL import Image
-from detect import SSDDetector
-from mrcnn import get_instance_segmentation_model
+from ssd_detect import SSDDetector
+from mrcnn_train import get_instance_segmentation_model
 from torchvision.transforms import functional as F
 import copy
 

@@ -1,29 +1,18 @@
 import argparse
-import time
 import torch.backends.cudnn as cudnn
-import torch.optim
 import torch.utils.data
-from tqdm import tqdm
 from datasets import AINetDataset
-from ssd_utils import *
-from eval import evaluate
 
 import torchvision
 from torchvision.models.detection.faster_rcnn import FastRCNNPredictor
 from torchvision.models.detection.mask_rcnn import MaskRCNNPredictor
-import mrcnn_engine as engine
-from mrcnn_engine import train_one_epoch, evaluate
-import utils
-import mrcnn_transforms as T
-
+from mrcnn_engine import train_one_epoch, evaluate, _get_iou_types
 from coco_utils import get_coco_api_from_dataset
 from coco_eval import CocoEvaluator
+import mrcnn_utils
 
-import os
-import numpy as np
-import torch
 import torch.utils.data
-from PIL import Image
+
 
 def get_instance_segmentation_model(num_classes, pretrainded=True):
     # load an instance segmentation model pre-trained on COCO
@@ -132,15 +121,15 @@ if __name__ == '__main__':
     temp_valid = torch.utils.data.Subset(valid_dataset, indices[:10])
 
     train_loader = torch.utils.data.DataLoader(temp_train, batch_size=4, shuffle=True,
-                                               collate_fn=utils.collate_fn, num_workers=workers,
+                                               collate_fn=mrcnn_utils.collate_fn, num_workers=workers,
                                                pin_memory=True)
     valid_loader = torch.utils.data.DataLoader(temp_valid, batch_size=1, shuffle=False,
-                                               collate_fn=utils.collate_fn, num_workers=workers,
+                                               collate_fn=mrcnn_utils.collate_fn, num_workers=workers,
                                                pin_memory=True)
 
-    # coco = get_coco_api_from_dataset(valid_loader.dataset)
-    # iou_types = engine._get_iou_types(model)
-    # coco_evaluator = CocoEvaluator(coco, iou_types)
+    coco = get_coco_api_from_dataset(valid_loader.dataset)
+    iou_types = _get_iou_types(model)
+    coco_evaluator = CocoEvaluator(coco, iou_types)
 
     max_epochs = iterations // (len(train_dataset) // batch_size)
 

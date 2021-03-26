@@ -7,7 +7,7 @@ from tqdm import tqdm
 from ssd_model import SSD300, MultiBoxLoss
 from datasets import AINetDataset
 from ssd_utils import *
-from eval import evaluate
+from testcode.eval import evaluate
 
 parser = argparse.ArgumentParser()
 parser.add_argument('--data_folder',    type=str,       default="./data.json",
