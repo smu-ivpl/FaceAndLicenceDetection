@@ -50,7 +50,7 @@ This repository contains individual training codes of SSD and Mask R-CNN models 
         └── dataset_dir_...
         ```
     
-    - Each `image_dir_N` directory has input images and `.txt` label files. These label files are used to train the YOLO.
+    - Each `image_dir_N` directory has input images and `.txt` label files. These label files are used to train the YOLO.  
     ![image_dir](images/img1.png)  
     Also each `.txt` file has class and bounding box coordinates like `class id`, `start x`, `start y`, `width`, `height`  
     ![txt](images/img2.png)
@@ -291,10 +291,10 @@ For how to build darknet in Windows environment, we strongly refer to https://gi
 
         ```bash
         # default
-        (fld) C:\..\SSD.PYTORCH\> python ssd_train.py
+        (fld) C:\FaceAndLicenceDetection> python ssd_train.py
 
         # load checkpoint and adjust the learning rate
-        (fld) C:\..\SSD.PYTORCH\> python ssd_train.py --checkpoint=ckpt/saved_checkpoint_1.pth --lr=10e-4
+        (fld) C:\FaceAndLicenceDetection> python ssd_train.py --checkpoint=ckpt/saved_checkpoint_1.pth --lr=10e-4
         ```
 
         - Checkpoint files in the ckpt folder are created for each epoch
