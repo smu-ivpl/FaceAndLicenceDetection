@@ -6,9 +6,7 @@ from datasets import AINetDataset
 import torchvision
 from torchvision.models.detection.faster_rcnn import FastRCNNPredictor
 from torchvision.models.detection.mask_rcnn import MaskRCNNPredictor
-from mrcnn_engine import train_one_epoch, evaluate, _get_iou_types
-from coco_utils import get_coco_api_from_dataset
-from coco_eval import CocoEvaluator
+from mrcnn_engine import train_one_epoch, evaluate
 import mrcnn_utils
 
 import torch.utils.data
@@ -69,17 +67,17 @@ if __name__ == '__main__':
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
     # Learning parameters
-    checkpoint      = args.checkpoint
-    batch_size      = args.batch_size
-    iterations      = args.iterations
-    workers         = args.workers
-    print_freq      = args.print_freq
-    lr              = args.lr
-    decay_lr_at     = args.decay_lr_at
-    decay_lr_to     = args.decay_lr_to
-    momentum        = args.momentum
-    weight_decay    = args.weight_decay
-    grad_clip       = None  # clip if gradients are exploding, which may happen at larger batch sizes (sometimes at 32) - you will recognize it by a sorting error in the MuliBox loss calculation
+    checkpoint = args.checkpoint
+    batch_size = args.batch_size
+    iterations = args.iterations
+    workers = args.workers
+    print_freq = args.print_freq
+    lr = args.lr
+    decay_lr_at = args.decay_lr_at
+    decay_lr_to = args.decay_lr_to
+    momentum = args.momentum
+    weight_decay = args.weight_decay
+    grad_clip = None  # clip if gradients are exploding, which may happen at larger batch sizes (sometimes at 32) - you will recognize it by a sorting error in the MuliBox loss calculation
 
     cudnn.benchmark = True
 
@@ -95,14 +93,14 @@ if __name__ == '__main__':
 
     # construct an optimizer
     params = [p for p in model.parameters() if p.requires_grad]
-    # optimizer = torch.optim.SGD(params, lr=0.005,
-    #                             momentum=0.9, weight_decay=0.0005)
-    optimizer = torch.optim.Adam(params, lr=lr, weight_decay=0.0005)
+    optimizer = torch.optim.SGD(params, lr=0.005,
+                                momentum=0.9, weight_decay=0.0005)
+    # optimizer = torch.optim.Adam(params, lr=lr, weight_decay=0.0005)
 
     # and a learning rate scheduler which decreases the learning rate by
     # 10x every 3 epochs
     lr_scheduler = torch.optim.lr_scheduler.StepLR(optimizer,
-                                                   step_size=1,
+                                                   step_size=3,
                                                    gamma=0.1)
 
     # Custom dataloaders
@@ -115,32 +113,22 @@ if __name__ == '__main__':
                                  model_name='mrcnn',
                                  keep_difficult=keep_difficult)
 
-    indices = torch.randperm(len(train_dataset)).tolist()
-    temp_train = torch.utils.data.Subset(train_dataset, indices[:10])
-    indices = torch.randperm(len(valid_dataset)).tolist()
-    temp_valid = torch.utils.data.Subset(valid_dataset, indices[:10])
+    # indices = torch.randperm(len(train_dataset)).tolist()
+    # temp_train = torch.utils.data.Subset(train_dataset, indices[:10])
+    # indices = torch.randperm(len(valid_dataset)).tolist()
+    # temp_valid = torch.utils.data.Subset(valid_dataset, indices[:10])
 
-    train_loader = torch.utils.data.DataLoader(temp_train, batch_size=4, shuffle=True,
+    train_loader = torch.utils.data.DataLoader(train_dataset, batch_size=4, shuffle=True,
                                                collate_fn=mrcnn_utils.collate_fn, num_workers=workers,
                                                pin_memory=True)
-    valid_loader = torch.utils.data.DataLoader(temp_valid, batch_size=1, shuffle=False,
+    valid_loader = torch.utils.data.DataLoader(valid_dataset, batch_size=1, shuffle=False,
                                                collate_fn=mrcnn_utils.collate_fn, num_workers=workers,
                                                pin_memory=True)
 
-    coco = get_coco_api_from_dataset(valid_loader.dataset)
-    iou_types = _get_iou_types(model)
-    coco_evaluator = CocoEvaluator(coco, iou_types)
-
-    max_epochs = iterations // (len(train_dataset) // batch_size)
-
-    start_epoch = 0
-
-    if start_epoch >= max_epochs:
-        start_epoch = 0
-        print("Recovered epoch number reset to 0")
+    max_epochs = 10
 
     # Epochs
-    for epoch in range(start_epoch, max_epochs):
+    for epoch in range(max_epochs):
         # train for one epoch, printing every 10 iterations
         train_one_epoch(model, optimizer, train_loader, device, epoch, print_freq=10)
 
@@ -150,4 +138,4 @@ if __name__ == '__main__':
         torch.save(model.state_dict(), 'ckpt/mrcnn_epoch_{}.pth'.format(epoch))
 
         # evaluate on the test dataset
-        evaluate(model, valid_loader, coco_evaluator, device=device)
+        evaluate(model, valid_loader, device=device)
