@@ -44,9 +44,9 @@ if __name__ == '__main__':
                         help="학습 반복 횟수")
     parser.add_argument('--workers', type=int, default=4,
                         help="데이터 로딩 스레드의 수")
-    parser.add_argument('--print_freq', type=int, default=200,
+    parser.add_argument('--print_freq', type=int, default=10,
                         help="학습 상태 출력 주기")
-    parser.add_argument('--lr', type=float, default=1e-6,
+    parser.add_argument('--lr', type=float, default=5e-3,
                         help="학습율")
     parser.add_argument('--decay_lr_at', type=list, default=[60000, 80000, 100000],
                         help="학습율 감소 시점")
@@ -93,7 +93,7 @@ if __name__ == '__main__':
 
     # construct an optimizer
     params = [p for p in model.parameters() if p.requires_grad]
-    optimizer = torch.optim.SGD(params, lr=0.005,
+    optimizer = torch.optim.SGD(params, lr=lr,
                                 momentum=0.9, weight_decay=0.0005)
     # optimizer = torch.optim.Adam(params, lr=lr, weight_decay=0.0005)
 
@@ -130,7 +130,7 @@ if __name__ == '__main__':
     # Epochs
     for epoch in range(max_epochs):
         # train for one epoch, printing every 10 iterations
-        train_one_epoch(model, optimizer, train_loader, device, epoch, print_freq=10)
+        train_one_epoch(model, optimizer, train_loader, device, epoch, print_freq=print_freq)
 
         # update the learning rate
         lr_scheduler.step()

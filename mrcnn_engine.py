@@ -84,7 +84,7 @@ def evaluate(model, data_loader,  device):
     coco_evaluator = CocoEvaluator(coco, iou_types)
     print("Done!")
 
-    for images, targets in metric_logger.log_every(data_loader, 1, header):
+    for images, targets in metric_logger.log_every(data_loader, 50, header):
         images = list(img.to(device) for img in images)
 
         torch.cuda.synchronize()
@@ -110,4 +110,4 @@ def evaluate(model, data_loader,  device):
     coco_evaluator.summarize()
     torch.set_num_threads(n_threads)
 
-    # return coco_evaluator
+    return coco_evaluator
